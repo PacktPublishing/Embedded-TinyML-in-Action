@@ -1,0 +1,97 @@
+name: Chapter 8 disturbance telemetry test
+version: 1
+author: Embedded TinyML in Action
+
+steps:
+  - wait-serial: 'Chapter 8 behavior-monitoring node ready.'
+
+  # Window 1: normal operation
+  - wait-serial: '--- Observation Window 1 ---'
+  - wait-serial: 'Enclosure opened:      NO'
+  - wait-serial: 'Peripheral failures:   0 failed checks'
+  - wait-serial: 'Battery drop:          0.00 V'
+
+  # Start disturbance during Window 2.
+  - set-control:
+      part-id: enclosure
+      name: pressed
+      value: 1
+
+  - set-control:
+      part-id: commBurst
+      name: pressed
+      value: 1
+
+  # Move the node while the MPU6050 is still healthy.
+  - set-control:
+      part-id: imu1
+      name: accelX
+      value: 1.5
+
+  - set-control:
+      part-id: imu1
+      name: accelZ
+      value: 1.0
+
+  # Allow several 100 ms telemetry samples to capture movement.
+  - delay: 500ms
+
+  # Now simulate loss of the peripheral.
+  - set-control:
+      part-id: peripheralFault
+      name: pressed
+      value: 1
+
+  - delay: 500ms
+
+  # Lower battery voltage after Window 2 has already sampled
+  # its normal starting voltage.
+  - set-control:
+      part-id: battery
+      name: position
+      value: 0.35
+
+  - delay: 500ms
+
+  # Verify the complete Window 2 snapshot.
+  - wait-serial: '--- Observation Window 2 ---'
+  - wait-serial: 'Enclosure opened:      YES'
+  - wait-serial: 'Enclosure transitions: 1'
+  - wait-serial: 'Maintenance mode:      OFF'
+  - wait-serial: 'Peak movement:'
+  - wait-serial: 'Mean loop time:'
+  - wait-serial: 'Max loop time:'
+  - wait-serial: 'Packets sent:'
+  - wait-serial: 'Peripheral failures:'
+  - wait-serial: 'Reset reason:'
+  - wait-serial: 'Boot count:'
+  - wait-serial: 'Battery start:'
+  - wait-serial: 'Minimum battery:'
+  - wait-serial: 'Battery drop:'
+  - delay: 100ms
+
+  # Return simulation controls to normal.
+  - set-control:
+      part-id: enclosure
+      name: pressed
+      value: 0
+
+  - set-control:
+      part-id: peripheralFault
+      name: pressed
+      value: 0
+
+  - set-control:
+      part-id: commBurst
+      name: pressed
+      value: 0
+
+  - set-control:
+      part-id: imu1
+      name: accelX
+      value: 0
+
+  - set-control:
+      part-id: battery
+      name: position
+      value: 0.83

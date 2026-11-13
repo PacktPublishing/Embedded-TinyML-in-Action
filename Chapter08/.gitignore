@@ -1,0 +1,7 @@
+.pio/
+.vscode/
+.DS_Store
+behavior_test
+*.log
+*.bin
+*.elf

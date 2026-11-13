@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "author": "Embedded TinyML in Action",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-mpu6050",
+      "id": "imu1",
+      "top": -190,
+      "left": 300,
+      "attrs": {
+        "accelX": "0",
+        "accelY": "0",
+        "accelZ": "1"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "enclosure",
+      "top": -170,
+      "left": -250,
+      "attrs": {
+        "label": "Enclosure",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "maintenance",
+      "top": -80,
+      "left": -250,
+      "attrs": {
+        "label": "Maintenance",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "peripheralFault",
+      "top": 20,
+      "left": -250,
+      "attrs": {
+        "label": "Peripheral fault",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "commBurst",
+      "top": 110,
+      "left": -250,
+      "attrs": {
+        "label": "Comm burst",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "battery",
+      "top": 180,
+      "left": 300,
+      "attrs": {
+        "value": "850"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "imu1:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "imu1:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "imu1:SDA",
+      "esp:21",
+      "green",
+      []
+    ],
+    [
+      "imu1:SCL",
+      "esp:22",
+      "blue",
+      []
+    ],
+    [
+      "battery:SIG",
+      "esp:34",
+      "orange",
+      []
+    ],
+    [
+      "battery:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "battery:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "esp:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "enclosure:1.l",
+      "esp:27",
+      "green",
+      []
+    ],
+    [
+      "enclosure:2.l",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "maintenance:1.l",
+      "esp:26",
+      "green",
+      []
+    ],
+    [
+      "maintenance:2.l",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "peripheralFault:1.l",
+      "esp:33",
+      "green",
+      []
+    ],
+    [
+      "peripheralFault:2.l",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "commBurst:1.l",
+      "esp:25",
+      "green",
+      []
+    ],
+    [
+      "commBurst:2.l",
+      "esp:3V3",
+      "red",
+      []
+    ]
+  ],
+  "serialMonitor": {
+    "display": "terminal"
+  },
+  "dependencies": {}
+}
