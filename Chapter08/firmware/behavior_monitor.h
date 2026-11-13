@@ -4,14 +4,20 @@
 
 #include "behavior_accumulator.h"
 #include "behavior_snapshot.h"
+#include "direct_checks.h"
 #include "telemetry_io.h"
 
 class BehaviorMonitor {
  public:
-  explicit BehaviorMonitor(TelemetryIO &telemetry) : telemetry_(telemetry) {}
+  BehaviorMonitor(TelemetryIO &telemetry,
+                  uint16_t peripheralFailureLimit)
+      : telemetry_(telemetry),
+        directChecks_(peripheralFailureLimit) {}
 
   void begin(uint32_t resetReason, uint32_t bootCount);
-  void sampleTelemetry();
+
+  DirectCheckState sampleTelemetry();
+
   void notePacketSent();
   void recordLoopExecution(uint32_t elapsedUs);
 
@@ -21,9 +27,14 @@ class BehaviorMonitor {
   bool enclosureOpenNow() const { return enclosureOpenNow_; }
   bool maintenanceActiveNow() const { return maintenanceActiveNow_; }
 
+  const DirectCheckState &directCheckState() const {
+    return directChecks_.state();
+  }
+
  private:
   TelemetryIO &telemetry_;
   BehaviorAccumulator accumulator_;
+  DirectChecks directChecks_;
 
   uint32_t windowStartMs_ = 0;
   uint32_t resetReason_ = 0;

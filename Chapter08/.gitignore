@@ -5,3 +5,4 @@ behavior_test
 *.log
 *.bin
 *.elf
+direct_checks_test

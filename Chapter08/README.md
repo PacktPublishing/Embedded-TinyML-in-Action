@@ -1,7 +1,7 @@
 # Chapter 8: Behavior-Aware Tamper Monitoring Node
 
-This repository milestone supports Section 8.4 of *Embedded TinyML in Action*.
-It implements the telemetry layer of a cabinet-mounted ESP32 behavior-monitoring node.
+This project supports Sections 8.3 and 8.4 of *Embedded TinyML in Action*.
+It implements the telemetry and direct-check layers of a cabinet-mounted ESP32 behavior-monitoring node.
 
 ## What this milestone does
 
@@ -18,7 +18,7 @@ The firmware collects and summarizes:
 
 Every five seconds it creates and prints one `BehaviorSnapshot`. The observation state is then cleared so the next window is independent.
 
-This milestone intentionally stops before the Chapter 8 rule engine and TinyML inference. Those are added in the next stage so the telemetry path can be verified first.
+The project now includes a direct-check engine for conditions that should not wait for TinyML inference. It detects an enclosure opening outside authorized maintenance and persistent peripheral unavailability. TinyML behavior inference is added in the next milestone.
 
 ## Target
 
@@ -81,3 +81,21 @@ PASS: behavior accumulator normal and disturbance windows
 ## Physical hardware note
 
 The physical battery input requires an appropriate voltage divider and calibration for the selected battery. The values in `config.h` are explicit defaults, not universal hardware constants. Do not connect a battery voltage above the ESP32 ADC input limit directly to GPIO34.
+
+
+## Direct tamper checks
+
+Direct checks operate on raw telemetry every 100 ms rather than waiting for the five-second observation window.
+
+The current rules are:
+
+- enclosure open while maintenance mode is inactive
+- peripheral unavailable for five consecutive checks
+
+Opening the enclosure during authorized maintenance does not trigger the enclosure rule. If maintenance ends while the enclosure remains open, the direct alert is raised immediately.
+
+The five-check peripheral threshold corresponds to approximately 500 ms at the current sampling interval. It is a demonstration threshold and should be tuned for the deployed hardware and application.
+
+The automated Wokwi scenario is available at `scenarios/direct_checks.yaml`.
+
+It verifies unauthorized enclosure access, authorized maintenance context, persistent peripheral failure, and recovery.

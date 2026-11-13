@@ -1,0 +1,82 @@
+name: Chapter 8 direct tamper checks
+version: 1
+author: Embedded TinyML in Action
+
+steps:
+  - wait-serial: 'Chapter 8 behavior-monitoring node ready.'
+
+  # Case 1: Unauthorized cabinet opening.
+  - set-control:
+      part-id: enclosure
+      name: pressed
+      value: 1
+
+  - wait-serial: 'DIRECT ALERT: enclosure opened outside maintenance'
+
+  - set-control:
+      part-id: enclosure
+      name: pressed
+      value: 0
+
+  - wait-serial: 'DIRECT CLEAR: enclosure condition cleared'
+
+  # Case 2: Authorized maintenance.
+  # Opening the cabinet while maintenance is active must not trigger.
+  - set-control:
+      part-id: maintenance
+      name: pressed
+      value: 1
+
+  - delay: 200ms
+
+  - set-control:
+      part-id: enclosure
+      name: pressed
+      value: 1
+
+  - delay: 500ms
+
+  # The cabinet remains open. Once maintenance is removed,
+  # the same physical condition must become suspicious.
+  - set-control:
+      part-id: maintenance
+      name: pressed
+      value: 0
+
+  - wait-serial: 'DIRECT ALERT: enclosure opened outside maintenance'
+
+  # Re-entering authorized maintenance clears the condition.
+  - set-control:
+      part-id: maintenance
+      name: pressed
+      value: 1
+
+  - wait-serial: 'DIRECT CLEAR: enclosure condition cleared'
+
+  - set-control:
+      part-id: enclosure
+      name: pressed
+      value: 0
+
+  - set-control:
+      part-id: maintenance
+      name: pressed
+      value: 0
+
+  - delay: 200ms
+
+  # Case 3: Persistent peripheral loss.
+  - set-control:
+      part-id: peripheralFault
+      name: pressed
+      value: 1
+
+  - wait-serial: 'DIRECT ALERT: peripheral unavailable after 5 consecutive failed checks'
+
+  # Restoring the peripheral must clear the direct flag.
+  - set-control:
+      part-id: peripheralFault
+      name: pressed
+      value: 0
+
+  - wait-serial: 'DIRECT CLEAR: peripheral communication restored'

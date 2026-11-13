@@ -7,7 +7,11 @@
 #include "telemetry_io.h"
 
 TelemetryIO telemetry;
-BehaviorMonitor monitor(telemetry);
+BehaviorMonitor monitor(
+    telemetry,
+    Config::PERIPHERAL_FAILURE_LIMIT);
+
+DirectCheckState lastDirectState;
 
 uint32_t lastTelemetrySampleMs = 0;
 uint32_t lastPacketMs = 0;
@@ -50,6 +54,31 @@ void printSnapshot(const BehaviorSnapshot &s) {
   } else {
     Serial.println("Battery:               unavailable");
   }
+}
+
+void reportDirectCheckChanges(const DirectCheckState &state) {
+  if (state.enclosureOutsideMaintenance &&
+      !lastDirectState.enclosureOutsideMaintenance) {
+    Serial.println(
+        "DIRECT ALERT: enclosure opened outside maintenance");
+  } else if (!state.enclosureOutsideMaintenance &&
+             lastDirectState.enclosureOutsideMaintenance) {
+    Serial.println(
+        "DIRECT CLEAR: enclosure condition cleared");
+  }
+
+  if (state.peripheralUnavailable &&
+      !lastDirectState.peripheralUnavailable) {
+    Serial.printf(
+        "DIRECT ALERT: peripheral unavailable after %u consecutive failed checks\n",
+        state.consecutivePeripheralFailures);
+  } else if (!state.peripheralUnavailable &&
+             lastDirectState.peripheralUnavailable) {
+    Serial.println(
+        "DIRECT CLEAR: peripheral communication restored");
+  }
+
+  lastDirectState = state;
 }
 
 void simulateCommunication(uint32_t nowMs) {
@@ -96,7 +125,11 @@ void loop() {
   if (static_cast<uint32_t>(nowMs - lastTelemetrySampleMs) >=
       Config::TELEMETRY_SAMPLE_MS) {
     lastTelemetrySampleMs = nowMs;
-    monitor.sampleTelemetry();
+
+    const DirectCheckState directState =
+        monitor.sampleTelemetry();
+
+    reportDirectCheckChanges(directState);
   }
 
   simulateCommunication(nowMs);

@@ -7,6 +7,10 @@ constexpr uint32_t SERIAL_BAUD = 115200;
 constexpr uint32_t OBSERVATION_MS = 5000;
 constexpr uint32_t TELEMETRY_SAMPLE_MS = 100;
 
+// Direct-check threshold. Five consecutive failed checks at the current
+// 100 ms sampling interval represents approximately 500 ms of unavailability.
+constexpr uint16_t PERIPHERAL_FAILURE_LIMIT = 5;
+
 constexpr uint8_t PIN_ENCLOSURE = 27;
 constexpr uint8_t PIN_MAINTENANCE = 26;
 constexpr uint8_t PIN_COMM_BURST = 25;       // Simulation-only fault injection
