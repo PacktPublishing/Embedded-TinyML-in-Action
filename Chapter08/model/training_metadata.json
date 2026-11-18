@@ -1,0 +1,42 @@
+{
+  "seed": 42,
+  "features": [
+    "peak_movement_g",
+    "mean_loop_ratio",
+    "max_loop_ratio",
+    "packet_count_ratio",
+    "peripheral_failure_fraction",
+    "battery_drop_v",
+    "enclosure_transitions"
+  ],
+  "scaler_mean": [
+    0.025120881513306208,
+    0.998753702044487,
+    1.0018015790358186,
+    1.0016269888480505,
+    0.0010249999770894646,
+    0.006110681989731859,
+    0.02125
+  ],
+  "scaler_scale": [
+    0.014337045918964822,
+    0.0501107515253829,
+    0.1194917222478243,
+    0.06966704686554111,
+    0.004410144456879734,
+    0.00608064576214319,
+    0.1442166339227217
+  ],
+  "anomaly_threshold": 2.5174643993377686,
+  "model_parameters": 120,
+  "normal_false_positive_rate": 0.006,
+  "weak_abnormal_detection_rate": 0.994,
+  "int8_anomaly_threshold": 2.568772554397583,
+  "int8_input_scale": 0.14900466799736023,
+  "int8_input_zero_point": -95,
+  "int8_output_scale": 0.1283377707004547,
+  "int8_output_zero_point": -54,
+  "int8_model_size_bytes": 3432,
+  "int8_normal_false_positive_rate": 0.005333333333333333,
+  "int8_weak_abnormal_detection_rate": 0.9933333333333333
+}

@@ -99,3 +99,59 @@ The five-check peripheral threshold corresponds to approximately 500 ms at the c
 The automated Wokwi scenario is available at `scenarios/direct_checks.yaml`.
 
 It verifies unauthorized enclosure access, authorized maintenance context, persistent peripheral failure, and recovery.
+
+
+## TinyML behavior inference
+
+The Chapter 8 project combines immediate tamper checks with a lightweight TinyML anomaly detector.
+
+The direct-check path evaluates clear conditions such as an enclosure opening outside maintenance mode and sustained peripheral communication loss. These checks operate directly on telemetry and do not wait for the observation window.
+
+The TinyML path evaluates weaker combinations of behavior over each five-second observation window. Seven compact features are used:
+
+- peak dynamic movement
+- mean loop-time ratio
+- maximum loop-time ratio
+- packet-count ratio
+- peripheral failure fraction
+- battery-voltage drop
+- enclosure transitions
+
+A small 7-5-3-5-7 autoencoder is trained using controlled synthetic normal behavior. Reconstruction error is used as the anomaly measure. The training and evaluation data are teaching datasets and should not be interpreted as field-collected tamper data.
+
+The final model is fully INT8 quantized and occupies approximately 3.4 KB. In the controlled evaluation dataset, the quantized model produced a 0.533% normal false-positive rate and detected 99.333% of the generated weak-abnormal windows.
+
+Wokwi validation demonstrates both branches of the hybrid design. Clear disturbances trigger the direct checks immediately, while a weaker movement-plus-communication pattern is classified as abnormal by TinyML without triggering either direct rule.
+
+The TinyML-enabled ESP32 build uses approximately 30,856 bytes of RAM and 356,081 bytes of flash. Observed Wokwi inference latency was approximately 340-492 microseconds per five-second observation window.
+
+The Wokwi commissioning baseline is specific to the simulation. Physical deployments must establish their own baseline during authorized commissioning.
+
+### Model workflow
+
+Generate the controlled datasets:
+
+```bash
+python model/generate_behavior_data.py
+python model/generate_calibration_data.py
+```
+
+Train the autoencoder:
+
+```bash
+python model/train_behavior_model.py
+```
+
+Convert and validate the INT8 model:
+
+```bash
+python model/convert_behavior_model.py
+```
+
+Generate the embedded model header:
+
+```bash
+python model/export_model_header.py
+```
+
+The final physical ESP32 validation is performed after the complete Chapter 8 detection and response pipeline has been integrated.

@@ -7,6 +7,15 @@ constexpr uint32_t SERIAL_BAUD = 115200;
 constexpr uint32_t OBSERVATION_MS = 5000;
 constexpr uint32_t TELEMETRY_SAMPLE_MS = 100;
 
+// Commissioning reference used by the Chapter 8 Wokwi demonstration.
+// Physical hardware must establish its own baseline during commissioning.
+constexpr float BASELINE_MEAN_LOOP_US = 21.0f;
+constexpr float BASELINE_MAX_LOOP_US = 4395.0f;
+constexpr float BASELINE_PACKETS_PER_WINDOW = 5.0f;
+constexpr float EXPECTED_TELEMETRY_SAMPLES =
+    static_cast<float>(OBSERVATION_MS) /
+    static_cast<float>(TELEMETRY_SAMPLE_MS);
+
 // Direct-check threshold. Five consecutive failed checks at the current
 // 100 ms sampling interval represents approximately 500 ms of unavailability.
 constexpr uint16_t PERIPHERAL_FAILURE_LIMIT = 5;

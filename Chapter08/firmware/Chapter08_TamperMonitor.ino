@@ -3,6 +3,8 @@
 #include "esp_system.h"
 
 #include "behavior_monitor.h"
+#include "behavior_features.h"
+#include "behavior_inference.h"
 #include "config.h"
 #include "telemetry_io.h"
 
@@ -12,6 +14,7 @@ BehaviorMonitor monitor(
     Config::PERIPHERAL_FAILURE_LIMIT);
 
 DirectCheckState lastDirectState;
+BehaviorInference behaviorInference;
 
 uint32_t lastTelemetrySampleMs = 0;
 uint32_t lastPacketMs = 0;
@@ -111,6 +114,12 @@ void setup() {
   const uint32_t resetReason = static_cast<uint32_t>(esp_reset_reason());
   monitor.begin(resetReason, bootCount);
 
+  if (behaviorInference.begin()) {
+    Serial.println("TinyML inference ready.");
+  } else {
+    Serial.println("ERROR: TinyML inference initialization failed.");
+  }
+
   lastTelemetrySampleMs = millis();
   lastPacketMs = millis();
 
@@ -137,7 +146,38 @@ void loop() {
   monitor.recordLoopExecution(micros() - loopStartUs);
 
   if (monitor.observationReady(nowMs)) {
-    const BehaviorSnapshot snapshot = monitor.finishObservationWindow(nowMs);
+    const BehaviorSnapshot snapshot =
+        monitor.finishObservationWindow(nowMs);
+
     printSnapshot(snapshot);
+
+    const BehaviorFeatures features =
+        BehaviorFeatures::fromSnapshot(
+            snapshot,
+            Config::BASELINE_MEAN_LOOP_US,
+            Config::BASELINE_MAX_LOOP_US,
+            Config::BASELINE_PACKETS_PER_WINDOW,
+            Config::EXPECTED_TELEMETRY_SAMPLES);
+
+    const BehaviorInferenceResult inference =
+        behaviorInference.run(features);
+
+    if (inference.valid) {
+      Serial.printf(
+          "TinyML reconstruction error: %.4f\n",
+          inference.reconstructionError);
+
+      Serial.printf(
+          "TinyML classification:       %s\n",
+          inference.abnormal ? "ABNORMAL" : "NORMAL");
+
+      Serial.printf(
+          "TinyML inference time:       %lu us\n",
+          static_cast<unsigned long>(
+              inference.inferenceUs));
+    } else {
+      Serial.println(
+          "TinyML inference:             unavailable");
+    }
   }
 }

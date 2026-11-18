@@ -1,0 +1,49 @@
+name: Chapter 8 weak abnormal TinyML test
+version: 1
+author: Embedded TinyML in Action
+
+steps:
+  - wait-serial: 'Chapter 8 behavior-monitoring node ready.'
+
+  # First window must remain normal.
+  - wait-serial: '--- Observation Window 1 ---'
+  - wait-serial: 'TinyML classification:       NORMAL'
+
+  # Window 2: moderate movement plus a short communication burst.
+  # Neither condition is an immediate direct-rule alert.
+  - set-control:
+      part-id: imu1
+      name: accelX
+      value: 0.65
+
+  - set-control:
+      part-id: imu1
+      name: accelZ
+      value: 1.0
+
+  - set-control:
+      part-id: commBurst
+      name: pressed
+      value: 1
+
+  - delay: 700ms
+
+  # Return both signals to normal.
+  - set-control:
+      part-id: imu1
+      name: accelX
+      value: 0
+
+  - set-control:
+      part-id: commBurst
+      name: pressed
+      value: 0
+
+  # TinyML should detect the combined weak pattern.
+  - wait-serial: '--- Observation Window 2 ---'
+  - wait-serial: 'Enclosure opened:      NO'
+  - wait-serial: 'Peripheral failures:   0 failed checks'
+  - wait-serial: 'Peak movement:'
+  - wait-serial: 'Packets sent:'
+  - wait-serial: 'TinyML reconstruction error:'
+  - wait-serial: 'TinyML classification:       ABNORMAL'

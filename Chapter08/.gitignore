@@ -6,3 +6,7 @@ behavior_test
 *.bin
 *.elf
 direct_checks_test
+.venv-ml/
+model/*.csv
+model/*.keras
+model/__pycache__/
