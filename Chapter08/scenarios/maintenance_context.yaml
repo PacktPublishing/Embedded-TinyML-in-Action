@@ -1,0 +1,48 @@
+name: Chapter 8 maintenance-context severity test
+version: 1
+author: Embedded TinyML in Action
+
+steps:
+  - wait-serial: 'Chapter 8 behavior-monitoring node ready.'
+
+  - wait-serial: '--- Observation Window 1 ---'
+
+  - set-control:
+      part-id: maintenance
+      name: pressed
+      value: 1
+
+  - set-control:
+      part-id: imu1
+      name: accelX
+      value: 0.65
+
+  - set-control:
+      part-id: imu1
+      name: accelZ
+      value: 1.0
+
+  - set-control:
+      part-id: commBurst
+      name: pressed
+      value: 1
+
+  - delay: 700ms
+
+  - set-control:
+      part-id: imu1
+      name: accelX
+      value: 0
+
+  - set-control:
+      part-id: commBurst
+      name: pressed
+      value: 0
+
+  - wait-serial: '--- Observation Window 2 ---'
+  - delay: 200ms
+
+  - set-control:
+      part-id: maintenance
+      name: pressed
+      value: 0

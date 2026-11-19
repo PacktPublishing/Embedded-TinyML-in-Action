@@ -6,6 +6,8 @@
 #include "behavior_features.h"
 #include "behavior_inference.h"
 #include "config.h"
+#include "event_decision.h"
+#include "event_record.h"
 #include "telemetry_io.h"
 
 TelemetryIO telemetry;
@@ -14,7 +16,12 @@ BehaviorMonitor monitor(
     Config::PERIPHERAL_FAILURE_LIMIT);
 
 DirectCheckState lastDirectState;
+DirectCheckState windowDirectEvidence;
 BehaviorInference behaviorInference;
+EventDecisionEngine eventDecisionEngine;
+EventRecorder eventRecorder;
+
+uint32_t nextEventId = 1;
 
 uint32_t lastTelemetrySampleMs = 0;
 uint32_t lastPacketMs = 0;
@@ -56,6 +63,61 @@ void printSnapshot(const BehaviorSnapshot &s) {
     Serial.printf("Battery drop:          %.2f V\n", s.batteryDropV);
   } else {
     Serial.println("Battery:               unavailable");
+  }
+}
+
+const char *severityName(EventSeverity severity) {
+  switch (severity) {
+    case EventSeverity::Low:
+      return "LOW";
+    case EventSeverity::Medium:
+      return "MEDIUM";
+    case EventSeverity::High:
+      return "HIGH";
+    case EventSeverity::Critical:
+      return "CRITICAL";
+    case EventSeverity::None:
+    default:
+      return "NONE";
+  }
+}
+
+void printEventRecord(const TamperEventRecord &record) {
+  Serial.printf("EVENT RECORD #%lu\n",
+                static_cast<unsigned long>(record.eventId));
+  Serial.printf("  severity:                %s\n",
+                severityName(record.severity));
+  Serial.printf("  window:                  %lu\n",
+                static_cast<unsigned long>(record.windowSequence));
+  Serial.printf("  enclosure direct:        %s\n",
+                record.enclosureDirect ? "YES" : "NO");
+  Serial.printf("  peripheral direct:       %s\n",
+                record.peripheralDirect ? "YES" : "NO");
+  Serial.printf("  TinyML abnormal:         %s\n",
+                record.tinymlAbnormal ? "YES" : "NO");
+  Serial.printf("  reconstruction error:    %.4f\n",
+                record.reconstructionError);
+  Serial.printf("  response notify:         %s\n",
+                record.shouldNotify ? "YES" : "NO");
+  Serial.printf("  response restrict:       %s\n",
+                record.shouldRestrict ? "YES" : "NO");
+  Serial.printf("  response safe state:     %s\n",
+                record.shouldEnterSafeState ? "YES" : "NO");
+}
+
+void accumulateDirectEvidence(const DirectCheckState &state) {
+  windowDirectEvidence.enclosureOutsideMaintenance =
+      windowDirectEvidence.enclosureOutsideMaintenance ||
+      state.enclosureOutsideMaintenance;
+
+  windowDirectEvidence.peripheralUnavailable =
+      windowDirectEvidence.peripheralUnavailable ||
+      state.peripheralUnavailable;
+
+  if (state.consecutivePeripheralFailures >
+      windowDirectEvidence.consecutivePeripheralFailures) {
+    windowDirectEvidence.consecutivePeripheralFailures =
+        state.consecutivePeripheralFailures;
   }
 }
 
@@ -139,6 +201,7 @@ void loop() {
         monitor.sampleTelemetry();
 
     reportDirectCheckChanges(directState);
+    accumulateDirectEvidence(directState);
   }
 
   simulateCommunication(nowMs);
@@ -179,5 +242,31 @@ void loop() {
       Serial.println(
           "TinyML inference:             unavailable");
     }
+
+    const EventDecision decision =
+        eventDecisionEngine.evaluate(
+            windowDirectEvidence,
+            inference.valid,
+            inference.abnormal,
+            snapshot.maintenanceActive);
+
+    Serial.printf(
+        "Event severity:             %s\n",
+        severityName(decision.severity));
+
+    if (decision.shouldRecord) {
+      const TamperEventRecord record =
+          eventRecorder.build(
+              nextEventId++,
+              nowMs,
+              snapshot,
+              windowDirectEvidence,
+              inference,
+              decision);
+
+      printEventRecord(record);
+    }
+
+    windowDirectEvidence = DirectCheckState{};
   }
 }
