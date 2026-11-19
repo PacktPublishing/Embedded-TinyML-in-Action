@@ -123,7 +123,7 @@ The final model is fully INT8 quantized and occupies approximately 3.4 KB. In th
 
 Wokwi validation demonstrates both branches of the hybrid design. Clear disturbances trigger the direct checks immediately, while a weaker movement-plus-communication pattern is classified as abnormal by TinyML without triggering either direct rule.
 
-The TinyML-enabled ESP32 build uses approximately 30,856 bytes of RAM and 356,081 bytes of flash. Observed Wokwi inference latency was approximately 340-492 microseconds per five-second observation window.
+The TinyML-enabled ESP32 build uses approximately 30,856 bytes of RAM and 357,205 bytes of flash. Observed Wokwi inference latency was approximately 339-492 microseconds per five-second observation window.
 
 The Wokwi commissioning baseline is specific to the simulation. Physical deployments must establish their own baseline during authorized commissioning.
 
@@ -155,3 +155,24 @@ python model/export_model_header.py
 ```
 
 The final physical ESP32 validation is performed after the complete Chapter 8 detection and response pipeline has been integrated.
+
+## Final Chapter 8 validation
+
+The final software build uses 30,856 bytes of RAM (9.4%) and 357,205 bytes of flash (27.3%) on the ESP32 Dev Module target.
+
+Five host-side regression tests pass: behavior accumulation, direct tamper checks, feature construction, context-aware severity decisions, and tamper-event evidence construction.
+
+The final Wokwi validation matrix covers the complete hybrid pipeline:
+
+| Scenario | Direct evidence | TinyML | Severity | Event record |
+| --- | --- | --- | --- | --- |
+| Normal operation | No | Normal | None | No |
+| Weak combined behavior | No | Abnormal | Medium | Yes |
+| Authorized maintenance anomaly | No | Abnormal | Low | Yes |
+| Combined disturbance | Yes | Abnormal | Critical | Yes |
+
+The direct-check scenario also verifies immediate enclosure and persistent peripheral-loss alerts, including proper clearing when conditions return to normal.
+
+The High severity path is unit-tested for the case where a direct tamper condition exists without TinyML corroboration. In the current Wokwi enclosure-opening case, TinyML also detects the behavior, so the live result correctly escalates to Critical rather than High.
+
+Simulation validates the software behavior and reproducibility of the Chapter 8 example. Final publication-quality validation is still performed on physical ESP32 hardware.
